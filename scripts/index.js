@@ -1,34 +1,29 @@
 
-var size = 2**12;//定义的音频数组长度
+var size = 2**11;//定义的音频数组长度 <=2**14
 
 var 幂=1.7;
 
 var box = document.getElementsByClassName('right')[0];
+
 var canvas = document.createElement("canvas");
 var ctx = canvas.getContext("2d");
-var line;//渐变色变量
+
 box.appendChild(canvas);
-var height,width;
-var Dots = [];//用于存放点对象数组,点的坐标和颜色信息
 
 var mv = new Musicvisualizer({
 	size:size,
 	draw:draw
 });
 
-
-
-function getRandom(m,n){
-	return Math.round(Math.random()*(n-m)+m);
-}
+var height,width;
 
 var Dots = [];
 
 function getDots(){
-	Dots = [];
-	var sizei,sizei_,sizeij,sizei1,dot,j;
+	Dots.length=0;
+	var sizei,sizei_,sizeij,sizei1,dot,i,j,k;
 	sizeij=0;
-	for(var i=0;i<width;i++){
+	for(i=0;i<width;i++){
 		sizei=parseInt(sizef*i**幂);
 		Dots.push({
 			y:0,//高度
@@ -45,7 +40,7 @@ function getDots(){
 			if(sizei==sizei_){
 
 			}else{
-				var k=i-sizeij;
+				k=i-sizeij;
 				for(j=0;j<k;j++){
 					sizei1=j/k;
 					Dots[j+sizeij].sizei1=sizei1;
@@ -67,6 +62,7 @@ function getDots(){
 //width=(1/(幂)/sizef)**(1/(幂-1)) //此时一个像素正好是一个音频数据量;小于时,多个像素有一个音频数据量;大于时,一个像素有多个音频数据量
 var sizef=0;
 var sizef2=0;
+var heightj;
 
 /**
  * [resize 根据窗口大小改变canvas画布大小]
@@ -82,17 +78,14 @@ function resize(){
 	canvas.style.width = canvas.width / scale + 'px';
 	canvas.style.height= canvas.height/ scale + 'px';
 
+	heightj=(height-100)/256;//音频数据最大值256
+
 	sizef=size/width**幂;
 	sizef2=(1/幂/sizef)**(1/(幂-1));
 	if(sizef2<1){
 		sizef2=1;
 	}
 
-	// 设置渐变色
-	line = ctx.createLinearGradient(0,0,0,height);//线性渐变
-	line.addColorStop(0,"red");
-	line.addColorStop(0.5,"orange");
-	line.addColorStop(1,"green");
 	getDots();
 }
 resize();
@@ -111,19 +104,20 @@ f0=0;
 f1=Date.now();
 fps=0;
 
+
+var ra,rectWidthI,t1h,rectHeight,o,j,sum1;
+var rectWidth = 1;
+var cw = 1;
+var capHeight=1
+
 function draw(arr){
 	ctx.clearRect(0,0,width,height);//每次绘制时，清空上次画布内容
-	//ctx.fillStyle = line;
 	ctx.font = "20px Arial";
+	//ctx.fillStyle = line;
 	//var rectWidth = width/size;
 	//var cw = rectWidth*1+1;
-	var rectWidth = 1;
-	var cw = 1;
-	var heightj=(height-100)/256;//音频数据最大值256
 	//var cw = rectWidth*0.6;
 	//var capHeight = cw > 10?10:cw;//防止上面矩形过高
-	var capHeight=1
-	var ra,rectWidthI,t1h,rectHeight,o,j,sum1;
 	for(var i=0;i<width;i++){
 		o = Dots[i];
 
@@ -166,7 +160,11 @@ function draw(arr){
 			o.y=ra;
 			o.v=(rectHeight-o.zy)*0.4-o.v*0.5;//碰撞后反弹, 损失一定速度
 		}
-		o.v-=0.2;//重力加速度
+		if(o.y>height){
+			o.y=height-2;
+			o.v=-o.v*0.5;//碰顶反弹
+		}
+		o.v-=0.4;//重力加速度
 		o.y+=o.v;
 		o.zy=rectHeight;
 		ctx.fillRect(rectWidthI,height-(o.y+capHeight),cw,capHeight);
@@ -181,7 +179,7 @@ function draw(arr){
 		f1=f1_;
 	}
 	//ctx.fillStyle = "white";
-	ctx.fillText("FPS:"+Math.round(fps),width-100,20);
+	ctx.fillText("FPS:"+Math.round(fps),width-80,20);
 	
 	/*/
 	f1_=Date.now();
