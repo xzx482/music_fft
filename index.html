@@ -9,8 +9,6 @@
         height: 100%;
         width: 100%;
         margin: 0;
-        min-width:550px;
-        min-height: 400px;
     }
     #主内容 {
         width: 100%;
@@ -271,7 +269,6 @@ var 现在时间,帧数,帧率,帧率时间,延迟时间,绘制时间;
 帧数=0;
 帧率时=0;
 
-f1=Date.now();
 
 
 var x,条高,o,j,总和,最大;
@@ -279,7 +276,7 @@ var 粒高=1//粒子高度
 
 var 绘制=()=>{
 
-    绘制时间=Date.now();
+    绘制时间=performance.now();
 
 	画布.clearRect(0,0,画布宽,画布高);
 	画布.font = "20px Arial";//清空后需重新设置字体等
@@ -338,7 +335,7 @@ var 绘制=()=>{
 		画布.fillRect(x,画布高-(o.y+粒高),1,粒高);
 		//*/
 	}
-    现在时间=Date.now();
+    现在时间=performance.now();
 	//*
 	帧数++;
 	if(帧数==32){
@@ -351,9 +348,9 @@ var 绘制=()=>{
 	
 	//*/
     
-	画布.fillText((现在时间-绘制时间).toString().padStart(2,'0')+'ms',画布宽-140,20);
+	画布.fillText(parseInt(现在时间-绘制时间).toString().padStart(2,'0')+'ms',画布宽-140,20);
 	
-	画布.fillText((现在时间-延迟时间).toString().padStart(2,'0')+'ms',画布宽-200,20);
+	画布.fillText(parseInt(现在时间-延迟时间).toString().padStart(2,'0')+'ms',画布宽-200,20);
 	延迟时间=现在时间;
 
     //画布.fillText(String(音频关联.outputLatency).padStart(2,'0')+'ms',画布宽-320,20);
