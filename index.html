@@ -1,20 +1,372 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-	<meta charset="UTF-8">
-	<title>loosen's MusicVisualizer</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-	<link rel='stylesheet' href='styles/index.css'/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1</title>
+<style>
+    html,body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        min-width:550px;
+        min-height: 400px;
+    }
+    #主内容 {
+        width: 100%;
+        height: 100%;
+        /*
+        display: flex;
+        flex-direction: column;
+        */
+    }
+    #主内容>input[type="number"] {
+        width: 34px;
+    }
+    #fileDom{
+        height: 23px;
+    }
+    #playerDom{
+        width: 100%;
+        height: 54px;
+    }
+
+    input[pseudo="-webkit-media-controls-timeline" i]::-internal-track-segment-highlight-before{
+        background: rgba(127, 127, 127,0.87);
+    }
+
+    #canBox{
+        flex: 1;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        position:absolute;
+        pointer-events: none;
+        z-index: 2;
+    }
+
+</style>
 </head>
 <body>
-	<header>
-  	  <input id="loadfile" type="file">
-      <p>
-        Volume<input id="volume" type="range" min="0" max="100" value="60">
-      </p>
-  	</header>
-    <div class="right"></div>
-    <script type="text/javascript" src="scripts/MusicVisualizer.js"></script>
-    <script type="text/javascript" src="scripts/index.js"></script>
+    <div id="canBox">
+        <canvas id="画布"></canvas>
+    </div>
+    <div id="主内容">
+        <input id="fileDom" type="file"/>
+        <input id="幂Dom" type="number" step="0.1" min="0" max="10"/>
+        <input id="音频数组大小Dom" type="number" step="1" min="0" max="14"/>
+        <br/>
+        <audio id="playerDom" controls="controls" autoplay="autoplay"></audio>
+    </div>
+<script>
+
+
+var 音频数组大小;
+var 音频数组大小指数=11;// <=14, 12最佳
+
+var 幂=1.7;
+
+
+幂Dom.oninput=()=>{
+    var v=parseFloat(幂Dom.value);
+    if(v&&v>=0&&v<=10){
+        幂=v;
+        更新非线性参数();
+    }else{
+        幂Dom.value=幂;
+    }
+    
+}
+
+音频数组大小Dom.oninput=()=>{
+    var v=parseInt(音频数组大小Dom.value);
+    if(v>=0&&v<=14){
+        音频数组大小指数=v;
+        更新音频数组大小();
+    }else{
+        音频数组大小Dom.value=音频数组大小指数;
+    }
+}
+
+
+
+
+fileDom.onchange=(e)=>{
+    let files=e.target.files;
+    if(files.length<1)return;
+    let file=files[0];
+    var objectURL=URL.createObjectURL(file);
+    playerDom.src=objectURL;
+    //playerDom.play();
+}
+
+var 音频关联,来源,分析器;
+
+var 初始=()=>{
+
+    音频关联=new AudioContext();
+    来源=音频关联.createMediaElementSource(playerDom);
+
+    分析器=音频关联.createAnalyser();
+    分析器.connect(音频关联.destination);
+    来源.connect(分析器);
+
+    分析器.fftSize = 音频数组大小*2;
+
+    var i,j;
+    j=0;
+    var 新帧=()=>{
+        //*
+        分析器.getByteFrequencyData(音频数组);
+        /*/
+        j+=1;
+        if(j>100){
+            j=0;
+        }else if(j>50){
+            for(i=0;i<arr.length;i++){
+                arr[i]=0;
+            }
+        }else{
+            for(i=0;i<arr.length;i++){
+                arr[i]=64;
+            }
+        }
+        //*/
+        绘制();
+        requestAnimationFrame(新帧);
+    }
+    新帧();
+
+}
+
+var 音频数组;
+
+var 更新音频数组大小=()=>{
+    音频数组大小=2**音频数组大小指数;
+    if(分析器){
+        分析器.fftSize=音频数组大小*2;
+    }
+    音频数组=new Uint8Array(音频数组大小);
+
+    更新非线性参数();
+
+}
+
+
+//浏览器禁止自动播放音频, 但可以在点击事件发生时播放
+var 初次点击=()=>{
+    document.removeEventListener("click",初次点击);
+    初始();
+}
+document.addEventListener("click",初次点击);
+
+
+var 画布Dom=document.getElementById("画布");
+
+var 画布=画布Dom.getContext('2d');
+
+
+
+
+var 画布高,画布宽;
+
+var 列=[];
+
+var 更新列=()=>{
+	列.length=0;
+	var 音数引,音数引_旧,x_旧,b,dot,x,j,k;
+	x_旧=0;
+	for(x=0;x<画布宽;x++){
+		音数引=parseInt(非参1*x**幂);//对应的音频数组下标
+		列.push({
+			y:0,//高度
+			v:0,//速度
+			zy:0,//矩形高度
+			音数引:音数引,//音频数组下标
+			b:0//两种情况, 分别对应不同的意义, 详见下方 if(非导参1>x){...}else{...} 的两种情况
+		});
+	}
+	for(var x=0;x<列.length;x++){
+		dot=列[x];
+		音数引=dot.音数引;
+		if(非导参1>x){
+            //多个像素有一个音频数据量
+
+			if(音数引==音数引_旧){
+
+			}else{
+                //找到 一个音频数据量 的 开始和结束 的像素 位置
+                //对于其中的每个像素, 分配其 左右两个 不同的音频数据量 的 加权平均数, 越左边的像素 对左边的 音频数据量 权重越大
+                //b即为右边的权重, 左边的权重为1-b
+				k=x-x_旧;
+				for(j=0;j<k;j++){
+					b=j/k;
+					列[j+x_旧].b=b;
+				}
+				x_旧=x
+			}
+			音数引_旧=音数引
+		}else{
+            //一个像素有多个音频数据量
+            //b为 音频数据量 的个数
+			dot.b=音数引-列[x-1].音数引;
+		}
+	}
+}
+
+//非线性(二次函数)频谱; 自变量 画布宽, 因变量 音频数组大小
+// 音频数组大小=非参1*画布宽**幂;
+// 对其求导
+//音频数组大小'=幂*非参1*画布宽'**(幂-1)
+//计算斜率为1时的 画布的x坐标, 名为 非导参1
+// 1=幂*非参1*非导参1**(幂-1)
+//非导参1**(幂-1)=1/幂/非参1
+//非导参1=(1/(幂)/非参1)**(1/(幂-1)) //此时一个像素正好是一个音频数据量;横坐标小于它时,多个像素有一个音频数据量;大于它时,一个像素有多个音频数据量
+var 非参1=0;
+var 非导参1=0;
+var 音数对高;
+
+更新非线性参数=()=>{
+	非参1=音频数组大小/画布宽**幂;
+	非导参1=(1/幂/非参1)**(1/(幂-1));
+	if(非导参1<1){
+		非导参1=1;
+	}
+
+	更新列();
+
+}
+
+
+
+幂Dom.oninput();
+音频数组大小Dom.oninput();
+
+更新音频数组大小();
+
+var 适应大小=()=>{
+	var 像素比=devicePixelRatio;
+	画布高=canBox.clientHeight*像素比;
+	画布宽=canBox.clientWidth*像素比;
+    
+	画布Dom.width=画布宽;
+	画布Dom.height=画布高;
+	
+	画布Dom.style.width=画布Dom.width/像素比+'px';
+	画布Dom.style.height=画布Dom.height/像素比+'px';
+
+	音数对高=(画布高-(23+54)*像素比)/256;//音频数据对应高度. 音频数据最大值256. 音频数据 乘以它 即为实际高度
+
+    更新非线性参数();
+
+}
+适应大小();
+window.onresize=适应大小;
+
+
+
+
+
+var 现在时间,帧数,帧率,帧率时间,延迟时间,绘制时间;
+帧数=0;
+帧率时=0;
+
+f1=Date.now();
+
+
+var x,条高,o,j,总和,最大;
+var 粒高=1//粒子高度
+
+var 绘制=()=>{
+
+    绘制时间=Date.now();
+
+	画布.clearRect(0,0,画布宽,画布高);
+	画布.font = "20px Arial";//清空后需重新设置字体等
+    
+	for(x=0;x<画布宽;x++){
+		o=列[x];
+
+		if(o.b){
+			if(非导参1>x){
+				条高=音数对高*(音频数组[o.音数引]*(1-o.b)+音频数组[o.音数引+1]*o.b);
+			}else{
+				/*
+				//平均值
+				总和=0;
+				for(j=o.音数引;j>o.音数引-o.b;j--){
+					总和+=音频数组[j];
+				}
+				条高=总和/o.b*音数对高;
+				/*/
+				//最大值
+				最大=0;
+				for(j=o.音数引;j>o.音数引-o.b;j--){
+					if(音频数组[j]>最大){
+						最大=音频数组[j];
+					}
+				}
+				条高=最大*音数对高;
+                //*/
+			}
+		}else{
+			条高=音频数组[o.音数引]*音数对高;
+		}
+		
+        
+		画布.fillStyle="#00000033";
+		画布.fillRect(x,画布高-条高,1,条高);
+
+		//*
+		
+		画布.fillStyle="#000000ff";
+
+
+		//小方块匀加速下落
+
+		if(o.y<条高){
+			o.y=条高;
+			o.v=(条高-o.zy)*0.3-o.v*0.2;//碰撞后反弹, 损失一定速度
+		}
+		if(o.y>画布高){
+			o.y=画布高-2;
+			o.v=-o.v*0.5;//碰顶反弹
+		}
+		o.v-=0.4;//重力加速度
+		o.y+=o.v;
+		o.zy=条高;
+		画布.fillRect(x,画布高-(o.y+粒高),1,粒高);
+		//*/
+	}
+    现在时间=Date.now();
+	//*
+	帧数++;
+	if(帧数==32){
+		帧数=0;
+		帧率=32/(现在时间-帧率时间)*1000;
+		帧率时间=现在时间;
+	}
+	//ctx.fillStyle = "white";
+	画布.fillText("FPS:"+Math.round(帧率),画布宽-80,20);
+	
+	//*/
+    
+	画布.fillText((现在时间-绘制时间).toString().padStart(2,'0')+'ms',画布宽-140,20);
+	
+	画布.fillText((现在时间-延迟时间).toString().padStart(2,'0')+'ms',画布宽-200,20);
+	延迟时间=现在时间;
+
+    //画布.fillText(String(音频关联.outputLatency).padStart(2,'0')+'ms',画布宽-320,20);
+    //画布.fillText(String(音频关联.baseLatency).padStart(2,'0')+'ms',画布宽-400,20);
+	//*/
+}
+
+
+
+
+</script>
 </body>
 </html>
+
+
+
