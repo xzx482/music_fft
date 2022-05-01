@@ -42,20 +42,53 @@
         pointer-events: none;
         z-index: 2;
     }
+    #文件名{
+        display: inline-flex;
+        white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+        cursor: default;
+        width: calc(100% - 370px);
+    }
+    #文件拖入提示{
+        position: fixed;
+        display: flex;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        color: #fff;
+        font-size: 24px;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+        z-index: 3;
+    }
+    #文件拖入提示_跟随鼠标{
+        position: fixed;
+        font-size: 14px;
+    }
 
 </style>
 </head>
 <body>
+    <div id="文件拖入提示">
+        <span id="文件拖入提示_跟随鼠标"></span>
+        <span id="文件拖入提示_文本"></span>
+    </div>
     <div id="canBox">
         <canvas id="画布"></canvas>
     </div>
     <div id="主内容">
-        <input id="fileDom" type="file"/>
+        <input type="button" value="选择文件" id="文件选择按钮"/><span id="文件名" title="未选择文件">未选择文件</span>
         <input id="幂Dom" type="number" step="0.1" min="0" max="10"/>
         <input id="音频数组大小Dom" type="number" step="1" min="0" max="14"/>
         <br/>
         <audio id="playerDom" controls="controls" autoplay="autoplay"></audio>
     </div>
+    <input id="fileDom" type="file" style="display: none;"/>
 <script>
 
 
@@ -64,6 +97,9 @@ var 音频数组大小指数=11;// <=14, 12最佳
 
 var 幂=1.7;
 
+文件选择按钮.onclick=function(){
+    fileDom.click();
+}
 
 幂Dom.oninput=()=>{
     var v=parseFloat(幂Dom.value);
@@ -87,16 +123,67 @@ var 幂=1.7;
 }
 
 
+var 播放=(file)=>{
+    初次点击();
+    文件名.innerText=file.name;
+    文件名.title=file.name;
+    var objectURL=URL.createObjectURL(file);
+    playerDom.src=objectURL;
+}
 
+var 文件可播放=false;
 
 fileDom.onchange=(e)=>{
     let files=e.target.files;
-    if(files.length<1)return;
+    if(files.length<1){
+        return;
+    }
     let file=files[0];
-    var objectURL=URL.createObjectURL(file);
-    playerDom.src=objectURL;
+    播放(file);
     //playerDom.play();
 }
+document.body.ondragenter=(e)=>{
+    文件拖入提示.style.display='flex';
+    文件拖入提示_跟随鼠标.display='block';
+    var tp=e.dataTransfer.items[0];
+    if(tp.kind=='file' && tp.type.match('audio.*')){
+        文件拖入提示_文本.innerText='拖放文件以播放';
+        文件可播放=true;
+    }else{
+        文件拖入提示_文本.innerText='类型 "'+tp.type+'" 不支持';
+        文件可播放=false;
+    }
+    文件拖入提示_跟随鼠标.innerText=文件拖入提示_文本.innerText;
+}
+document.body.ondragleave=(e)=>{
+    文件拖入提示.style.display='none';
+}
+
+document.body.ondragover=(e)=>{
+    文件拖入提示_跟随鼠标.style.left=e.clientX-文件拖入提示_跟随鼠标.clientWidth-20+'px';
+    文件拖入提示_跟随鼠标.style.top=e.clientY+20+'px';
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+}
+
+document.body.ondrop=(e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    document.body.ondragleave();
+    if(!文件可播放){
+        return false;
+    }
+    文件可播放=false;
+    let files=e.dataTransfer.files;
+    if(files.length<1){
+        return;
+    }
+    let file=files[0];
+    播放(file);
+    return false;
+}
+
 
 var 音频关联,来源,分析器;
 
@@ -152,10 +239,16 @@ var 更新音频数组大小=()=>{
 
 
 //浏览器禁止自动播放音频, 但可以在点击事件发生时播放
+var 初次点击_=true;
+
 var 初次点击=()=>{
-    document.removeEventListener("click",初次点击);
-    初始();
+    if(初次点击_){
+        初次点击_=false;
+        document.removeEventListener("click",初次点击);
+        初始();
+    }
 }
+
 document.addEventListener("click",初次点击);
 
 
@@ -311,7 +404,7 @@ var 绘制=()=>{
 		}
 		
         
-		画布.fillStyle="#00000033";
+		画布.fillStyle="#00000077";
 		画布.fillRect(x,画布高-条高,1,条高);
 
 		//*
