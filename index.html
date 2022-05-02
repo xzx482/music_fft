@@ -202,7 +202,6 @@ var 初始=()=>{
     j=0;
     var 新帧=()=>{
         //*
-        分析器.getByteFrequencyData(音频数组);
         /*/
         j+=1;
         if(j>100){
@@ -218,6 +217,7 @@ var 初始=()=>{
         }
         //*/
         绘制();
+        分析器.getByteFrequencyData(音频数组);
         requestAnimationFrame(新帧);
     }
     新帧();
@@ -268,7 +268,7 @@ var 更新列=()=>{
 	var 音数引,音数引_旧,x_旧,b,dot,x,j,k;
 	x_旧=0;
 	for(x=0;x<画布宽;x++){
-		音数引=parseInt(非参1*x**幂);//对应的音频数组下标
+		音数引=(非参1*x**幂)|0;//对应的音频数组下标
 		列.push({
 			y:0,//高度
 			v:0,//速度
@@ -335,16 +335,21 @@ var 音数对高;
 
 更新音频数组大小();
 
+var 像素比,文字位置;
+
 var 适应大小=()=>{
-	var 像素比=devicePixelRatio;
+	像素比=devicePixelRatio;
 	画布高=canBox.clientHeight*像素比;
 	画布宽=canBox.clientWidth*像素比;
     
 	画布Dom.width=画布宽;
 	画布Dom.height=画布高;
 	
-	画布Dom.style.width=画布Dom.width/像素比+'px';
-	画布Dom.style.height=画布Dom.height/像素比+'px';
+	画布Dom.style.width=画布宽/像素比+'px';
+	画布Dom.style.height=画布高/像素比+'px';
+
+    画布.font = 20*像素比+'px Arial';
+    文字位置=[20*像素比,画布宽-80*像素比,画布宽-140*像素比,画布宽-200*像素比]
 
 	音数对高=(画布高-(23+54)*像素比)/256;//音频数据对应高度. 音频数据最大值256. 音频数据 乘以它 即为实际高度
 
@@ -360,19 +365,19 @@ window.onresize=适应大小;
 
 var 现在时间,帧数,帧率,帧率时间,延迟时间,绘制时间;
 帧数=0;
-帧率时=0;
+帧率时间=0;
 
 
 
 var x,条高,o,j,总和,最大;
 var 粒高=1//粒子高度
 
+
 var 绘制=()=>{
 
     绘制时间=performance.now();
 
 	画布.clearRect(0,0,画布宽,画布高);
-	画布.font = "20px Arial";//清空后需重新设置字体等
     
 	for(x=0;x<画布宽;x++){
 		o=列[x];
@@ -398,6 +403,8 @@ var 绘制=()=>{
 				}
 				条高=最大*音数对高;
                 //*/
+                //中间值
+                //条高=音频数组[o.音数引-o.b]*音数对高;
 			}
 		}else{
 			条高=音频数组[o.音数引]*音数对高;
@@ -428,8 +435,8 @@ var 绘制=()=>{
 		画布.fillRect(x,画布高-(o.y+粒高),1,粒高);
 		//*/
 	}
-    现在时间=performance.now();
 	//*
+    现在时间=performance.now();
 	帧数++;
 	if(帧数==32){
 		帧数=0;
@@ -437,14 +444,15 @@ var 绘制=()=>{
 		帧率时间=现在时间;
 	}
 	//ctx.fillStyle = "white";
-	画布.fillText("FPS:"+Math.round(帧率),画布宽-80,20);
+
+	画布.fillText("FPS:"+Math.round(帧率),文字位置[1],文字位置[0]);
 	
-	//*/
     
-	画布.fillText(parseInt(现在时间-绘制时间).toString().padStart(2,'0')+'ms',画布宽-140,20);
+	画布.fillText(((现在时间-绘制时间)|0).toString().padStart(2,'0')+'ms',文字位置[2],文字位置[0]);
 	
-	画布.fillText(parseInt(现在时间-延迟时间).toString().padStart(2,'0')+'ms',画布宽-200,20);
+	画布.fillText(((现在时间-延迟时间)|0).toString().padStart(2,'0')+'ms',文字位置[3],文字位置[0]);
 	延迟时间=现在时间;
+	//*/
 
     //画布.fillText(String(音频关联.outputLatency).padStart(2,'0')+'ms',画布宽-320,20);
     //画布.fillText(String(音频关联.baseLatency).padStart(2,'0')+'ms',画布宽-400,20);
