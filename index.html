@@ -83,8 +83,8 @@
     </div>
     <div id="主内容">
         <input type="button" value="选择文件" id="文件选择按钮"/><span id="文件名" title="未选择文件">未选择文件</span>
-        <input id="幂Dom" type="number" step="0.1" min="0" max="10"/>
-        <input id="音频数组大小Dom" type="number" step="1" min="0" max="14"/>
+        <input id="幂Dom" type="number" step="0.1" min="1" max="10"/>
+        <input id="音频数组大小Dom" type="number" step="1" min="4" max="14"/>
         <br/>
         <audio id="playerDom" controls="controls" autoplay="autoplay"></audio>
     </div>
@@ -358,10 +358,11 @@ window.onresize=适应大小;
 
 
 
-var 现在时间,帧数,帧率,帧率时间,延迟时间,绘制时间,上次绘制时间,加速度;
+var 现在时间,帧数,帧率,帧率时间,延迟时间,计算高度时间,上次计算高度时间,加速度;
 帧数=0;
+帧率=0
 帧率时间=0;
-上次绘制时间=0;
+上次计算高度时间=0;
 
 
 
@@ -371,13 +372,13 @@ var 粒高=1//粒子高度
 
 var 计算高度=()=>{
 
-    绘制时间=performance.now();
-    绘制时间差=绘制时间-上次绘制时间;
+    计算高度时间=performance.now();
+    绘制时间差=计算高度时间-上次计算高度时间;
     if(绘制时间差>100){
         绘制时间差=100;
     }
 
-    加速度=绘制时间差*0.04;
+    加速度=绘制时间差*0.03;
 
 	画布.clearRect(0,0,画布宽,画布高);
     
@@ -434,13 +435,13 @@ var 计算高度=()=>{
 		//o.v-=0.4;//重力加速度
 		o.v-=加速度;
 		o.y+=o.v;
-		//o.zy=条高;
+		o.zy=条高;
         所有点高[x]=o.y;
 		//画布.fillRect(x,画布高-(o.y+粒高),1,粒高);
 		//*/
 	}
 
-    上次绘制时间=绘制时间;
+    上次计算高度时间=计算高度时间;
 
 
 
@@ -450,7 +451,7 @@ var 绘制=()=>{
 
     计算高度();
 
-    //将 填充条 与 画点 分离, 减少绘制时间, 主要是因为改变颜色增加绘制时间.
+    //将 填充条 与 画点 分离, 减少绘制时间, 主要是因为改变颜色会增加绘制时间.
     //填充条
     画布.fillStyle="#aaaaaa";
     for (x=0;x<画布宽;x++){
@@ -462,10 +463,6 @@ var 绘制=()=>{
     画布.fillStyle="#000000";
     for (x=0;x<画布宽;x++){
         画布.fillRect(x,画布高-所有点高[x],1,1);
-    }
-
-    for(x=0;x<画布宽;x++){
-        列[x].zy=所有条高[x];
     }
 
 	//*
@@ -481,7 +478,7 @@ var 绘制=()=>{
 	画布.fillText("FPS:"+Math.round(帧率),文字位置[1],文字位置[0]);
 	
     
-	画布.fillText(((现在时间-绘制时间)|0).toString().padStart(2,'0')+'ms',文字位置[2],文字位置[0]);
+	画布.fillText(((现在时间-计算高度时间)|0).toString().padStart(2,'0')+'ms',文字位置[2],文字位置[0]);
 	
 	画布.fillText(((现在时间-延迟时间)|0).toString().padStart(2,'0')+'ms',文字位置[3],文字位置[0]);
 	延迟时间=现在时间;
