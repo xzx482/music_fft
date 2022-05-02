@@ -254,8 +254,12 @@ document.addEventListener("click",初次点击);
 
 var 画布Dom=document.getElementById("画布");
 
-var 画布=画布Dom.getContext('2d');
+var 离屏画布=画布Dom.transferControlToOffscreen()
 
+var 画布=离屏画布.getContext('2d');
+
+
+var worker=new Worker('work.js');
 
 
 
@@ -340,11 +344,11 @@ var 适应大小=()=>{
 	画布高=canBox.clientHeight*像素比;
 	画布宽=canBox.clientWidth*像素比;
     
-	画布Dom.width=画布宽;
-	画布Dom.height=画布高;
+	离屏画布.width=画布宽;
+	离屏画布.height=画布高;
 	
-	画布Dom.style.width=画布Dom.width/像素比+'px';
-	画布Dom.style.height=画布Dom.height/像素比+'px';
+	画布Dom.style.width=画布宽/像素比+'px';
+	画布Dom.style.height=画布高/像素比+'px';
 
 	音数对高=(画布高-(23+54)*像素比)/256;//音频数据对应高度. 音频数据最大值256. 音频数据 乘以它 即为实际高度
 
