@@ -185,7 +185,7 @@ document.body.ondrop=(e)=>{
 }
 
 
-var 音频关联,来源,分析器;
+var 音频关联,来源,分析器,新帧时间;
 
 var 初始=()=>{
 
@@ -199,6 +199,7 @@ var 初始=()=>{
     分析器.fftSize = 音频数组大小*2;
 
     var 新帧=()=>{
+        新帧时间=performance.now();
         requestAnimationFrame(新帧);
         分析器.getByteFrequencyData(音频数组);
         绘制();
@@ -478,7 +479,7 @@ var 绘制=()=>{
 	画布.fillText("FPS:"+Math.round(帧率),文字位置[1],文字位置[0]);
 	
     
-	画布.fillText(((现在时间-计算高度时间)|0).toString().padStart(2,'0')+'ms',文字位置[2],文字位置[0]);
+	画布.fillText(((现在时间-新帧时间)|0).toString().padStart(2,'0')+'ms',文字位置[2],文字位置[0]);
 	
 	画布.fillText(((现在时间-延迟时间)|0).toString().padStart(2,'0')+'ms',文字位置[3],文字位置[0]);
 	延迟时间=现在时间;
