@@ -200,8 +200,8 @@ var 初始=async()=>{
         来源=音频处理.createMediaStreamSource(await navigator.mediaDevices.getUserMedia({audio: true})).connect(分析器);
     }catch(e){
         配置拖入提示();
-        适应大小();
         音频控件=true;
+        适应大小();
         文件拖入提示.style.display='';
         文件选择.style.display='';
         playerDom.style.display='';
