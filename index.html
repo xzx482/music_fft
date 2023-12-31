@@ -21,10 +21,10 @@
     #主内容>input[type="number"] {
         width: 34px;
     }
-    #fileDom{
+    #文件选择input{
         height: 23px;
     }
-    #playerDom{
+    #播放器{
         width: 100%;
         height: 54px;
     }
@@ -85,71 +85,71 @@
         <span id="文件选择" style="display: none;">
             <input type="button" value="选择文件" id="文件选择按钮"/><span id="文件名" title="未选择文件">未选择文件</span>
         </span>
-        <input id="幂Dom" type="number" step="0.1" min="1" max="10"/>
-        <input id="音频数组大小Dom" type="number" step="1" min="4" max="14"/>
+        <input id="幂input" type="number" step="0.1" min="1" max="10"/>
+        <input id="音频数组大小input" type="number" step="1" min="4" max="14"/>
         <br/>
-        <audio id="playerDom" controls="controls" autoplay="autoplay" style="display: none;"></audio>
+        <audio id="播放器" controls="controls" autoplay="autoplay" style="display: none;"></audio>
     </div>
-    <input id="fileDom" type="file" style="display: none;"/>
+    <input id="文件选择input" type="file" style="display: none;"/>
 <script>
 
 
-var 音频数组大小;
-var 音频数组大小指数=11;// <=14, 12最佳
+let 音频数组大小;
+let 音频数组大小指数=11;// <=14, 12最佳
 
-var 幂=1.5;
+let 幂=1.5;
 
 文件选择按钮.onclick=function(){
-    fileDom.click();
+    文件选择input.click();
 }
 
-幂Dom.oninput=()=>{
-    var v=parseFloat(幂Dom.value);
+幂input.oninput=()=>{
+    const v=parseFloat(幂input.value);
     if(v&&v>=0&&v<=10){
         幂=v;
         更新非线性参数();
     }else{
-        幂Dom.value=幂;
+        幂input.value=幂;
     }
     
 }
 
-音频数组大小Dom.oninput=()=>{
-    var v=parseInt(音频数组大小Dom.value);
+音频数组大小input.oninput=()=>{
+    const v=parseInt(音频数组大小input.value);
     if(v>=0&&v<=14){
         音频数组大小指数=v;
         更新音频数组大小();
     }else{
-        音频数组大小Dom.value=音频数组大小指数;
+        音频数组大小input.value=音频数组大小指数;
     }
 }
 
 
-var 播放=(file)=>{
+const 播放=(file)=>{
     初次点击();
     文件名.innerText=file.name;
     文件名.title=file.name;
-    var objectURL=URL.createObjectURL(file);
-    playerDom.src=objectURL;
+    const objectURL=URL.createObjectURL(file);
+    播放器.src=objectURL;
 }
 
-var 配置拖入提示=()=>{
+const 配置拖入提示=()=>{
 
-    var 文件可播放=false;
+    let 文件可播放=false;
 
-    fileDom.onchange=(e)=>{
+    文件选择input.onchange=(e)=>{
         let files=e.target.files;
         if(files.length<1){
             return;
         }
         let file=files[0];
         播放(file);
-        //playerDom.play();
+        //播放器.play();
     }
     document.body.ondragenter=(e)=>{
         文件拖入提示.style.display='flex';
         文件拖入提示_跟随鼠标.display='block';
-        var tp=e.dataTransfer.items[0];
+        const tp=e.dataTransfer.items[0];
         if(tp.kind=='file' && tp.type.match('audio.*')){
             文件拖入提示_文本.innerText='拖放文件以播放';
             文件可播放=true;
@@ -189,25 +189,25 @@ var 配置拖入提示=()=>{
     }
 }
 
-var 音频处理,来源,分析器,新帧时间;
-var 音频控件=false;
+let 音频上下文,来源,分析器,新帧时间;
+let 音频控件=false;
 
-var 初始=async()=>{
+const 初始=async()=>{
 
-    音频处理=new AudioContext();
-    分析器=音频处理.createAnalyser();
+    音频上下文=new AudioContext();
+    分析器=音频上下文.createAnalyser();
     try{
-        来源=音频处理.createMediaStreamSource(await navigator.mediaDevices.getUserMedia({audio: true})).connect(分析器);
+        来源=音频上下文.createMediaStreamSource(await navigator.mediaDevices.getUserMedia({audio: true})).connect(分析器);
     }catch(e){
         配置拖入提示();
         音频控件=true;
         适应大小();
         文件拖入提示.style.display='';
         文件选择.style.display='';
-        playerDom.style.display='';
+        播放器.style.display='';
 
-        来源=音频处理.createMediaElementSource(playerDom).connect(分析器);
-        分析器.connect(音频处理.destination);
+        来源=音频上下文.createMediaElementSource(播放器).connect(分析器);
+        分析器.connect(音频上下文.destination);
     }
     
 
@@ -216,7 +216,7 @@ var 初始=async()=>{
 
     分析器.fftSize = 音频数组大小*2;
 
-    var 新帧=()=>{
+    const 新帧=()=>{
         新帧时间=performance.now();
         requestAnimationFrame(新帧);
         分析器.getByteFrequencyData(音频数组);
@@ -228,9 +228,9 @@ var 初始=async()=>{
 }
 
 
-var 音频数组;
+let 音频数组;
 
-var 更新音频数组大小=()=>{
+const 更新音频数组大小=()=>{
     音频数组大小=2**音频数组大小指数;
     if(分析器){
         分析器.fftSize=音频数组大小*2;
@@ -243,9 +243,9 @@ var 更新音频数组大小=()=>{
 
 
 //浏览器禁止自动播放音频, 但可以在点击事件发生时播放
-var 初次点击_=true;
+let 初次点击_=true;
 
-var 初次点击=()=>{
+const 初次点击=()=>{
     if(初次点击_){
         初次点击_=false;
         document.removeEventListener("click",初次点击);
@@ -256,33 +256,24 @@ var 初次点击=()=>{
 document.addEventListener("click",初次点击);
 
 
-var 画布Dom=document.getElementById("画布");
+const 画布元素=document.getElementById("画布");
 
-var 画布=画布Dom.getContext('2d');
-
-
+const 画布=画布元素.getContext('2d');
 
 
-var 画布高,画布宽;
 
-var 列=[];
-/*
-var 所有条高;
-var 所有点高;
 
-var 列_点高,列_点速;
-var 列_条高;
-var 列_
-*/
+let 画布高,画布宽;
 
-var 更新列=()=>{
+let 列=[];
+
+
+const 更新列=()=>{
     所有条高=new Uint16Array(画布宽);
     所有点高=new Uint16Array(画布宽);
 	列.length=0;
-	var 音数引,音数引_旧,x_旧,b,dot,x,j,k;
-	x_旧=0;
-	for(x=0;x<画布宽;x++){
-		音数引=(非参1*x**幂)|0;//对应的音频数组下标
+	for(let x=0;x<画布宽;x++){
+		const 音数引=(非参1*x**幂)|0;//对应的音频数组下标
 		列.push({
 			y:0,//高度
 			v:0,//速度
@@ -291,9 +282,13 @@ var 更新列=()=>{
 			b:0//两种情况, 分别对应不同的意义, 详见下方 if(非导参1>x){...}else{...} 的两种情况
 		});
 	}
-	for(var x=0;x<列.length;x++){
-		dot=列[x];
-		音数引=dot.音数引;
+
+    let 音数引_旧=0;
+    let x_旧=0;
+
+	for(let x=0;x<列.length;x++){
+		const dot=列[x];
+		const 音数引=dot.音数引;
 		if(非导参1>x){
             //多个像素有一个音频数据量
 
@@ -303,10 +298,9 @@ var 更新列=()=>{
                 //找到 一个音频数据量 的 开始和结束 的像素 位置
                 //对于其中的每个像素, 分配其 左右两个 不同的音频数据量 的 加权平均数, 越左边的像素 对左边的 音频数据量 权重越大
                 //b即为右边的权重, 左边的权重为1-b
-				k=x-x_旧;
-				for(j=0;j<k;j++){
-					b=j/k;
-					列[j+x_旧].b=b;
+				const k=x-x_旧;
+				for(let j=0;j<k;j++){
+					列[j+x_旧].b=j/k;
 				}
 				x_旧=x
 			}
@@ -327,11 +321,11 @@ var 更新列=()=>{
 // 1=幂*非参1*非导参1**(幂-1)
 //非导参1**(幂-1)=1/幂/非参1
 //非导参1=(1/(幂)/非参1)**(1/(幂-1)) //此时一个像素正好是一个音频数据量;横坐标小于它时,多个像素有一个音频数据量;大于它时,一个像素有多个音频数据量
-var 非参1=0;
-var 非导参1=0;
-var 音数对高;
+let 非参1=0;
+let 非导参1=0;
+let 音数对高;
 
-var 更新非线性参数=()=>{
+const 更新非线性参数=()=>{
 	非参1=音频数组大小/画布宽**幂;
 	非导参1=(1/幂/非参1)**(1/(幂-1));
 	if(非导参1<1){
@@ -344,23 +338,23 @@ var 更新非线性参数=()=>{
 
 
 
-幂Dom.oninput();
-音频数组大小Dom.oninput();
+幂input.oninput();
+音频数组大小input.oninput();
 
 更新音频数组大小();
 
-var 像素比,文字位置;
+let 像素比,文字位置;
 
-var 适应大小=()=>{
+const 适应大小=()=>{
 	像素比=devicePixelRatio;
 	画布高=canBox.clientHeight*像素比;
 	画布宽=canBox.clientWidth*像素比;
     
-	画布Dom.width=画布宽;
-	画布Dom.height=画布高;
+	画布元素.width=画布宽;
+	画布元素.height=画布高;
 	
-	画布Dom.style.width=画布宽/像素比+'px';
-	画布Dom.style.height=画布高/像素比+'px';
+	画布元素.style.width=画布宽/像素比+'px';
+	画布元素.style.height=画布高/像素比+'px';
 
     画布.font = 20*像素比+'px Arial';
     文字位置=[20*像素比,画布宽-80*像素比,画布宽-140*像素比,画布宽-200*像素比]
@@ -376,33 +370,31 @@ window.onresize=适应大小;
 
 
 
-
-var 现在时间,帧数,帧率,帧率时间,延迟时间,计算高度时间,上次计算高度时间,加速度;
-帧数=0;
-帧率=0
-帧率时间=0;
-上次计算高度时间=0;
-
+let 帧数=0;
+let 帧率=0
+let 帧率时间=0;
+let 延迟时间=0;
+let 上次计算高度时间=0;
 
 
-var x,条高,o,j,总和,最大;
-var 粒高=1//粒子高度
 
 
-var 计算高度=()=>{
 
-    计算高度时间=performance.now();
+const 计算高度=()=>{
+
+    const 计算高度时间=performance.now();
     绘制时间差=计算高度时间-上次计算高度时间;
     if(绘制时间差>100){
         绘制时间差=100;
     }
 
-    加速度=绘制时间差*0.03;
+    let 加速度=绘制时间差*0.03;
 
 	画布.clearRect(0,0,画布宽,画布高);
     
-	for(x=0;x<画布宽;x++){
-		o=列[x];
+	for(let x=0;x<画布宽;x++){
+        let 条高;
+		let o=列[x];
 
 		if(o.b){
 			if(非导参1>x){
@@ -410,15 +402,15 @@ var 计算高度=()=>{
 			}else{
 				/*
 				//平均值
-				总和=0;
+				let 总和=0;
 				for(j=o.音数引;j>o.音数引-o.b;j--){
 					总和+=音频数组[j];
 				}
 				条高=总和/o.b*音数对高;
 				/*/
 				//最大值
-				最大=0;
-				for(j=o.音数引;j>o.音数引-o.b;j--){
+				let 最大=0;
+				for(let j=o.音数引;j>o.音数引-o.b;j--){
 					if(音频数组[j]>最大){
 						最大=音频数组[j];
 					}
@@ -456,8 +448,6 @@ var 计算高度=()=>{
 		o.y+=o.v;
 		o.zy=条高;
         所有点高[x]=o.y;
-		//画布.fillRect(x,画布高-(o.y+粒高),1,粒高);
-		//*/
 	}
 
     上次计算高度时间=计算高度时间;
@@ -466,7 +456,7 @@ var 计算高度=()=>{
 
 }
 
-var 绘制=()=>{
+const 绘制=()=>{
 
     计算高度();
 
@@ -485,7 +475,7 @@ var 绘制=()=>{
     }
 
 	//*
-    现在时间=performance.now();
+    const 现在时间=performance.now();
 	帧数++;
 	if(帧数==32){
 		帧数=0;
